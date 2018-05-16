@@ -8,18 +8,18 @@ using Database.Models;
 
 namespace Database.DAO
 {
-    class CoursesDAO:BaseDAO
+    public class CoursesDAO:BaseDAO
     {
-        public static List<Courses> GetAll(string sortString = null)
+        public static List<Courses> GetAll(string title = null)
         {
             StringBuilder sql = new StringBuilder();
             sql.Append("SELECT * ");
             sql.Append("FROM [COURSES] ");
-            if (sortString != null)
+            if (title.Equals(""))
             {
-                sql.Append("ORDER BY " + sortString);
+                sql.Append("WHERE UPPER(TITLE) LIKE UPPER(CONCAT('%',@TITLE,'%'))");
             }
-            List<Courses> ret = DbCon.Query<Courses>(sql.ToString()).ToList();
+            List<Courses> ret = DbCon.Query<Courses>(sql.ToString(), new { TITLE=title }).ToList();
 
             return ret;
         }
@@ -34,19 +34,15 @@ namespace Database.DAO
             return DbCon.Query<Courses>(sql.ToString(), new { COU_PK = id }).SingleOrDefault();
         }
 
-        public static bool Insert(Courses bean)
+        public static Int32 Insert(Courses bean)
         {
             StringBuilder sql = new StringBuilder();
             sql.Append("INSERT INTO [COURSES] ");
-            sql.Append("([COU_PK], [TITLE], [PERIOD] ");
-            sql.Append("VALUES( @COU_PK, @TITLE, @PERIOD)");
-            int rowsAffected = DbCon.Execute(sql.ToString(), bean);
-
-            if (rowsAffected > 0)
-            {
-                return true;
-            }
-            return false;
+            sql.Append("([TITLE], [PERIOD]) ");
+            sql.Append("VALUES(@TITLE, @PERIOD); SELECT CAST(scope_identity() AS int)");
+            int ret = DbCon.Query<Int32>(sql.ToString(), bean).FirstOrDefault();
+  
+                return ret; 
 
         }
 

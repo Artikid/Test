@@ -8,20 +8,21 @@ using Database.Models;
 using Dapper;
 using Database.DAO;
 
-namespace Database.DAO 
+namespace Database.DAO
 {
     public class SurveyResultsDAO : BaseDAO
     {
-        public static List<SurveyResults>  GetAll (string sortString = null)
+        public static List<SurveyResults> GetAll(string nomeCorso = null)
         {
             StringBuilder sql = new StringBuilder();
             sql.Append("SELECT * ");
             sql.Append("FROM [SURVEYRESULTS] ");
-            if(sortString!=null)
+            if (!nomeCorso.Equals(""))
             {
-                sql.Append("ORDER BY " + sortString);
+                sql.Append("WHERE UPPER(CORSO) LIKE CONCAT('%', @CORSO, '%') ");
             }
-            List<SurveyResults>  ret = DbCon.Query<SurveyResults>(sql.ToString()).ToList();
+
+            List<SurveyResults> ret = DbCon.Query<SurveyResults>(sql.ToString(), new { CORSO = nomeCorso }).ToList();
 
             return ret;
         }
@@ -32,23 +33,19 @@ namespace Database.DAO
             sql.Append("SELECT * ");
             sql.Append("FROM [SURVEYRESULTS] ");
             sql.Append("WHERE [ID] = @ID ");
-
             return DbCon.Query<SurveyResults>(sql.ToString(), new { ID = id }).SingleOrDefault();
         }
 
-        public static bool Insert (SurveyResults bean)
+        public static Int32 Insert(SurveyResults bean)
         {
             StringBuilder sql = new StringBuilder();
             sql.Append("INSERT INTO [SURVEYRESULTS] ");
-            sql.Append("([ID], [UNIQ_ID], [USER_ID], [CREATED], [MODIFIED], [CORSO], [DATA], [DOCENTE], [ALLIEVO_NOME], [ALLIEVO_COGNOME], [ALLIEVO_EMAIL], [ALLIEVO_AZIENDA], [ALLIEVO_REPARTO], [Q1], [Q2], [Q3], [Q4], [Q5], [Q6], [Q7], [Q8], [Q9], [Q10], [Q11], [Q12])");
-            sql.Append("VALUES( @ID, @UNIQ_ID, @USER_ID, @CREATED, @MODIFIED, @CORSO, @DATA, @DOCENTE, @ALLIEVO_NOME, @ALLIEVO_COGNOME, @ALLIEVO_EMAIL, @ALLIEVO_AZIENDA, @ALLIEVO_REPARTO, @Q1, @Q2, @Q3, @Q4, @Q5, @Q6, @Q7, @Q8, @Q9, @Q10, @Q11, @Q12)");
-            int rowsAffected = DbCon.Execute(sql.ToString(), bean);
+            sql.Append("([UNIQ_ID], [USER_ID], [CREATED], [MODIFIED], [CORSO], [DATA], [DOCENTE], [ALLIEVO_NOME], [ALLIEVO_COGNOME], [ALLIEVO_EMAIL], [ALLIEVO_AZIENDA], [ALLIEVO_REPARTO], [Q1], [Q2], [Q3], [Q4], [Q5], [Q6], [Q7], [Q8], [Q9], [Q10], [Q11], [Q12])   ");
+            sql.Append("VALUES(@UNIQ_ID, @USER_ID, @CREATED, @MODIFIED, @CORSO, @DATA, @DOCENTE, @ALLIEVO_NOME, @ALLIEVO_COGNOME, @ALLIEVO_EMAIL, @ALLIEVO_AZIENDA, @ALLIEVO_REPARTO, @Q1, @Q2, @Q3, @Q4, @Q5, @Q6, @Q7, @Q8, @Q9, @Q10, @Q11, @Q12); SELECT CAST(scope_identity() AS int)");
+            int ret = DbCon.Query<Int32>(sql.ToString(), bean).FirstOrDefault();
 
-            if(rowsAffected > 0)
-            {
-                return true;
-            }
-            return false;
+            return ret;
+
         }
         public static bool Update(SurveyResults bean)
         {
@@ -73,7 +70,7 @@ namespace Database.DAO
 
             int rowsAffected = DbCon.Execute(sql.ToString(), new { ID = id });
 
-            if(rowsAffected > 0)
+            if (rowsAffected > 0)
             {
                 return true;
             }
