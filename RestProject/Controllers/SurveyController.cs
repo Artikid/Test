@@ -3,6 +3,7 @@ using Database.Models;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -14,108 +15,56 @@ namespace RestProject.Controllers
     [RoutePrefix("api/Survey")]
     public class SurveyController : ApiController
     {
-        private string conString = ConfigurationManager.ConnectionStrings["DBCorsi"].ConnectionString;
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         [HttpGet]
         public IHttpActionResult Get(string nomeCorso = "")
         {
             try
             {
-                BaseDAO.OpenConnection(conString);
+                log.Info("Chiamato GetAll");
                 List<SurveyResults> ret = SurveyResultsDAO.GetAll(nomeCorso);
+                log.Info(ret[0]);
+                Debug.WriteLine(ret[0]);
                 return Ok(ret);
             }
             catch (Exception e)
             {
+                log.Error("Errore GetAll", e);
                 return InternalServerError(new Exception("Oooooopsss", e));
-            }
-            finally
-            {
-                BaseDAO.CloseConnection(conString);
             }
         }
         [HttpGet]
         [Route("{id:int}")]
         public IHttpActionResult Get(int id)
         {
-            BaseDAO.OpenConnection(conString);
             SurveyResults ret = SurveyResultsDAO.GetSingle(id);
             if (ret == null)
             {
-
                 return NotFound();
             }
-
-            BaseDAO.CloseConnection(conString);
             return Ok(ret);
-
-
         }
-        [HttpPost]
-        [Route("")]
-        public IHttpActionResult Post([FromBody] SurveyResults bean)
+
+        [HttpPut]
+        [Route("{id:int}")]
+        public IHttpActionResult Put(SurveyResults bean, int id)
         {
             if (ModelState.IsValid)
             {
-                try {
-                    BaseDAO.OpenConnection(conString);
-                    int newId = SurveyResultsDAO.Insert(bean);
-                    bean.ID = newId;
-
-                    return Created("", bean);
-                }catch (Exception e)
-                {
-                    throw new Exception("", e);
-                }finally
-                {
-                    BaseDAO.CloseConnection();
-                }
-
-            }
-            else
-            {
                 try
                 {
-                    return BadRequest(ModelState);
-                }catch (Exception e) {
-                    throw new Exception("", e);
-                }finally
-                {
-                    BaseDAO.CloseConnection();
-                }
-            }
-        }
-        [HttpPut]
-        [Route("{id:int}")]
-        public IHttpActionResult Put (SurveyResults bean, int id)
-        {   
-            if (ModelState.IsValid)
-            {
-                try {
-                    BaseDAO.OpenConnection(conString);
                     bean.ID = id;
                     bool ret = SurveyResultsDAO.Update(bean);
                     return Ok(ret);
-                }catch (Exception e)
+                }
+                catch (Exception e)
                 {
                     throw new Exception("", e);
-                }finally
-                {
-                    BaseDAO.CloseConnection(conString);
-
                 }
-            }else
+            }
+            else
             {
-                try {          
                 return NotFound();
-                }catch (Exception e)
-                {
-                    throw new Exception("", e);
-                }
-                finally
-                {
-                    BaseDAO.CloseConnection(conString);
-
-                }
             }
         }
         [HttpDelete]
@@ -124,16 +73,12 @@ namespace RestProject.Controllers
         {
             try
             {
-                BaseDAO.OpenConnection(conString);
                 bool ret = SurveyResultsDAO.Delete(id);
                 return Ok(ret);
-            }catch (Exception e)
+            }
+            catch (Exception e)
             {
                 throw new Exception("", e);
-            }
-            finally
-            {
-                BaseDAO.CloseConnection(conString);
             }
         }
     }

@@ -36,6 +36,7 @@ namespace Database.DAO
 
         public static Int32 Insert(Courses bean)
         {
+
             StringBuilder sql = new StringBuilder();
             sql.Append("INSERT INTO [COURSES] ");
             sql.Append("([TITLE], [PERIOD]) ");
@@ -43,7 +44,6 @@ namespace Database.DAO
             int ret = DbCon.Query<Int32>(sql.ToString(), bean).FirstOrDefault();
   
                 return ret; 
-
         }
 
         public static bool Update(Courses bean)

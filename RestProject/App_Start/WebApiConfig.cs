@@ -1,7 +1,9 @@
-﻿using System;
+﻿using RestProject.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
+using System.Web.Http.ExceptionHandling;
 
 namespace RestProject
 {
@@ -19,6 +21,10 @@ namespace RestProject
                 routeTemplate: "api/{controller}/{id}",
                 defaults: new { id = RouteParameter.Optional }
             );
+            config.Services.Add(typeof(IExceptionLogger), new TraceExceptionLogger());
+            //config.Services.Add(typeof(IExceptionLogger), new OopsExceptionHandler());
+            config.Services.Replace(typeof(IExceptionLogger), new OopsExceptionHandler());
+
         }
     }
 }

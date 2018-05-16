@@ -18,114 +18,76 @@ namespace RestProject.Controllers
         public IHttpActionResult Get(string title = "")
         {
             try
-            { 
-                BaseDAO.OpenConnection(conString);
+            {
                 List<Courses> ret = CoursesDAO.GetAll(title);
                 return Ok(ret);
-            }catch(Exception e)
+            }
+            catch (Exception e)
             {
                 return InternalServerError(new Exception("ooooops", e));
             }
-            finally
-            {
-                BaseDAO.CloseConnection(conString);
-            }
-            
         }
 
         [HttpGet]
         [Route("{id:int}")]
         public IHttpActionResult Get(int id)
         {
-            BaseDAO.OpenConnection(conString);
             SurveyResults ret = SurveyResultsDAO.GetSingle(id);
             if (ret == null)
             {
                 return NotFound();
             }
-
-            BaseDAO.CloseConnection(conString);
+            return Ok(ret);
+        }
+        [HttpGet]
+        [Route("{id:int}/Survey")]
+        public IHttpActionResult GetResults(int id)
+        {
+            List<SurveyResults> ret = SurveyResultsDAO.GetAll(id);
             return Ok(ret);
         }
 
-        [HttpPost]
-        [Route("")]
-        public IHttpActionResult Post([FromBody]Courses bean)
+
+        [HttpPut]
+        [Route("{id:int}/Survey")]
+        public IHttpActionResult PutResults([FromBody] List<SurveyResults> bean, int id)
         {
             if (ModelState.IsValid)
             {
-                try
+                CourseResultsDAO.Delete(id);
+                foreach (SurveyResults r in bean)
                 {
-                    BaseDAO.OpenConnection(conString);
-                    int newId = CoursesDAO.Insert(bean);
-                    bean.COU_PK = newId;
-
-                    return Created("", bean);
+                    CourseResults b = new CourseResults() { COU_FK = id, RES_FK = r.ID };
+                    CourseResultsDAO.Insert(b);
                 }
-                catch (Exception e)
-                {
-                    throw new Exception("", e);
-                }
-                finally
-                {
-                    BaseDAO.CloseConnection();
-                }
-
+                return Ok();
             }
             else
             {
-                try
-                {
-                    return BadRequest(ModelState);
-                }
-                catch (Exception e)
-                {
-                    throw new Exception("", e);
-                }
-                finally
-                {
-                    BaseDAO.CloseConnection();
-                }
+                return BadRequest(ModelState);
             }
         }
 
-        [HttpPut]
-        [Route("{id:int}")]
-        public IHttpActionResult Put(Courses bean, int id)
+        [HttpPost]
+        [Route]
+        public IHttpActionResult Put(Courses bean)
         {
             if (ModelState.IsValid)
             {
                 try
                 {
-                    BaseDAO.OpenConnection(conString);
-                    bean.COU_PK = id;
-                    bool ret = CoursesDAO.Update(bean);
+                    int ret = CoursesDAO.Insert(bean);
                     return Ok(ret);
                 }
                 catch (Exception e)
                 {
                     throw new Exception("", e);
-                }
-                finally
-                {
-                    BaseDAO.CloseConnection(conString);
+                    // return NotFound();
                 }
             }
             else
             {
-                try
-                {
-                    return NotFound();
-                }
-                catch (Exception e)
-                {
-                    throw new Exception("", e);
-                }
-                finally
-                {
-                    BaseDAO.CloseConnection(conString);
-
-                }
+                return NotFound();
             }
         }
 
@@ -135,17 +97,12 @@ namespace RestProject.Controllers
         {
             try
             {
-                BaseDAO.OpenConnection(conString);
                 bool ret = CoursesDAO.Delete(id);
                 return Ok(ret);
             }
             catch (Exception e)
             {
                 throw new Exception("", e);
-            }
-            finally
-            {
-                BaseDAO.CloseConnection(conString);
             }
         }
     }

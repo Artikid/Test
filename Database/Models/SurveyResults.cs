@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace Database.Models
 {
+    [ToString]
     public class SurveyResults
     {
       public  int   ID                      { get; set; } 

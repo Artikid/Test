@@ -5,13 +5,16 @@ using System.Text;
 using System.Threading.Tasks;
 using Database.Models;
 using Dapper;
+using System.Data.SqlClient;
+using Utils;
 
 namespace Database.DAO
 {
-    public class CourseResultsDAO:BaseDAO
+    public class CourseResultsDAO : BaseDAO
     {
         public static List<CourseResults> GetAll(string sortString = null)
         {
+            List<CourseResults> ret;
             StringBuilder sql = new StringBuilder();
             sql.Append("SELECT * ");
             sql.Append("FROM [COURSERESULTS] ");
@@ -19,8 +22,19 @@ namespace Database.DAO
             {
                 sql.Append("ORDER BY " + sortString);
             }
-            List<CourseResults> ret = DbCon.Query<CourseResults>(sql.ToString()).ToList();
-
+            try
+            {
+                using (SqlConnection cn = ResourceFactory.GetConnection())
+                {
+                    ret = cn.Query<CourseResults>(sql.ToString()).ToList();
+                }
+            }
+            catch (Exception e)
+            {
+                ExceptionExtras eh = new ExceptionExtras("Errore durante la lettura dei CourseResults");
+                eh.AddParam("sql", sql);
+                throw new CustomException(eh.ToString(), e);
+            }
             return ret;
         }
 
@@ -36,11 +50,25 @@ namespace Database.DAO
 
         public static bool Insert(CourseResults bean)
         {
+            int rowsAffected;
             StringBuilder sql = new StringBuilder();
             sql.Append("INSERT INTO [COURSERESULTS] ");
             sql.Append("([COU_FK], [RES_FK]) ");
             sql.Append("VALUES( @COU_FK, @RES_FK)");
-            int rowsAffected = DbCon.Execute(sql.ToString(), bean);
+            try
+            {
+                using (SqlConnection cn = ResourceFactory.GetConnection())
+                {
+                    rowsAffected = cn.Execute(sql.ToString(), bean);
+                }
+            }
+            catch (Exception e)
+            {
+                ExceptionExtras eh = new ExceptionExtras("Errore durante la lettura dei CourseResults");
+                eh.AddParam("sql", sql);
+                eh.AddParam("bean", bean);
+                throw new CustomException(eh.ToString(), e);
+            }
 
             if (rowsAffected > 0)
             {
@@ -65,13 +93,24 @@ namespace Database.DAO
         //    return false;
         //}
 
-        public static bool Delete(int couID, int resID)
+        public static bool Delete(int couID)
         {
-            StringBuilder sql = new StringBuilder();
-            sql.Append("DELETE FROM [COURSERESULTS] ");
-            sql.Append("WHERE [COU_FK]=@COU_FK AND [RES_FK]=@RES_FK ");
-
-            int rowsAffected = DbCon.Execute(sql.ToString(), new { COU_FK= couID, RES_FK= resID });
+            int rowsAffected;
+            StringBuilder sql = new StringBuilder("DELETE FROM [COURSERESULTS] WHERE [COU_FK]=@COU_FK ");
+            try
+            {
+                using (SqlConnection cn = ResourceFactory.GetConnection())
+                {
+                    rowsAffected = cn.Execute(sql.ToString(), new { COU_FK = couID });
+                }
+            }
+            catch (Exception e)
+            {
+                ExceptionExtras eh = new ExceptionExtras("Errore durante la lettura dei CourseResults");
+                eh.AddParam("sql", sql);
+                eh.AddParam("COU_FK", couID);
+                throw new CustomException(eh.ToString(), e);
+            }
 
             if (rowsAffected > 0)
             {
